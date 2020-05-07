@@ -1,6 +1,157 @@
 <head>
-<title>Send page</title>
+  <link href="./dist/video-js.css" rel="stylesheet" />
+  <link href="./css/send.css" rel="stylesheet" />
+  <script src="./dist/video.js"></script>
+  <script src="./dist/videojs-contrib-eme.js"></script>
+  <link href="./dist/silvermine-videojs-chromecast.css" rel="stylesheet" />
+  <script src="./dist/silvermine-videojs-chromecast.js"></script>
+  <!-- Required to show the chromecast button in chromium on Linux -->
+   <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+   <script type="text/javascript" src="media.js"></script>
+
+  <!-- If you'd like to support IE8 (for Video.js versions prior to v7) -->
+  <!--script src="https://vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js"></script-->
+
+<script>
+   window.SILVERMINE_VIDEOJS_CHROMECAST_CONFIG = {
+      preloadWebComponents: true,
+   };
+</script>
+
 </head>
-<body style="background-color: black; ">
-<div style="color: red;"> This page intentionally left empty</div>
+
+<body>
+  <video
+    id="my-video"
+    class="video-js"
+    controls
+    preload="auto"
+    width="640"
+    height="264"
+    poster="none.png"
+    data-setup='{"plugins": {"eme": {}, "chromecast": {} } }'
+  >
+    <p class="vjs-no-js">
+      To view this video please enable JavaScript, and consider upgrading to a
+      web browser that
+      <a href="https://videojs.com/html5-video-support/" target="_blank"
+        >supports HTML5 video</a
+      >
+    </p>
+  </video>
+  <div>
+    <button onclick="sendTest()">Send Test</button>
+    <button onclick="sendShow(1)">User show</button>
+    <button onclick="sendShow(0)">User hide</button>
+    <button onclick="sendDbg('SHOW')">Dbg show</button>
+    <button onclick="sendDbg('HIDE')">Dbg hide</button>
+    <button onclick="sendDbg('CLEAR')">Dbg clear</button>
+    <button onclick="sendDbg('CLEARCACHE')">Dbg clear cache</button>
+  </div>
+  <script>
+
+   var gp = null;
+
+   function loadVideo(vurl, thurl) {
+       let src = {
+           src: vurl,
+           type: 'video/mp4'
+       }
+       gp.src(src);
+       gp.poster(thurl);
+       gp.load();
+       //gp.play();
+       return false;
+   }
+
+   let getThumbUrl = (vurl, imgrel) => {
+       let a = vurl.split("/");
+       a.pop();
+       a.push(imgrel);
+       return a.join("/");
+   };
+
+   var gVideos = (() => {
+        if (mediaJSON && mediaJSON.categories) {
+            console.log("Len", mediaJSON.categories.length);
+            let a = mediaJSON.categories.filter((x) => x.name === "Movies");
+            if (a.length > 0 && a[0].videos && a[0].videos.length > 0) {
+                console.log(a[0].videos);
+                return a[0].videos;
+            }
+        } else {
+            console.log("Media not found");
+        }
+        return [];
+   })();
+
+   (() => {
+       for (let vid of gVideos) {
+           let t = getThumbUrl(vid.sources[0], vid.thumb);
+           document.write(`<br>
+           <div class="title">${vid.title}</div>
+           <div>${vid.description}</div>
+           <div onclick='loadVideo("${vid.sources[0]}", "${t}");' class="but" >
+           <img src="${t}" >
+           </div>
+           <hr>`);
+       }
+   })(); 
+    
+   let recApp = "CC1AD845";
+   // TODO: make foolproof
+   let idx = window.location.href.indexOf("r=");
+   if (idx >= 0) {
+       recApp = window.location.href.slice(idx + 2);
+   } else {
+       window.alert("Using default receiver id " + recApp);
+   }
+
+   var options;
+
+    options = {
+       controls: true,
+       techOrder: [ 'chromecast', 'html5' ], // You may have more Tech, such as Flash or HLS
+       plugins: {
+          chromecast: {
+              buttonPositionIndex: 0,
+              receiverAppID: recApp,
+              }
+       }
+    };
+    
+    window.onload = function()
+    {
+      // works
+      //videojs(document.getElementById('my-video'), options); 
+        
+                let castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+                console.log(castSession);
+                //console.log(gp.chromecastSessionManager.remotePlayerController);
+    }
+    // works too
+    
+    videojs('my-video', options, function() {
+         var player = this;
+         gp = this;
+            
+            
+            player.on('ready', function() { 
+                console.log("ready"); 
+                
+                return; 
+            });
+
+
+
+         player.chromecast();
+         
+      });
+
+    
+  </script>
 </body>
+<footer>
+<script defer src="./final.js" >
+</script>
+</footer>
