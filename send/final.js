@@ -61,12 +61,11 @@ function monitor() {
             );
             installed = true;
             console.log("Event listener install successful");
-
+            return;
 
         }
-    } else {
-        setTimeout(monitor, 1000);
-    }
+    } 
+    setTimeout(monitor, 1000);
 }
 
 setTimeout(
